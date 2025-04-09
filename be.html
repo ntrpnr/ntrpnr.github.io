@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <title>Säkerhetskontroll Quiz</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    #question { font-size: 1.2em; margin-bottom: 20px; }
+    #answer { margin-bottom: 20px; display: none; }
+    button { padding: 10px 20px; margin: 5px; }
+  </style>
+</head>
+<body>
+  <h1>Säkerhetskontroll Quiz</h1>
+  <div id="quiz-container">
+    <div id="question"></div>
+    <div id="answer"></div>
+    <button id="show-answer-btn">Visa svar</button>
+    <button id="next-btn">Nästa fråga</button>
+  </div>
+  <script>
+    const questions = [
+      {
+        question: "Vad ska kontrolleras vid belysning, körriktningsvisare, reflexer och signal?",
+        answer: "Kontrollera att föreskrivna lyktor, strålkastare och reflexer finns, är hela, rena och fungerar, samt att signalen fungerar."
+      },
+      {
+        question: "Vad ska kontrolleras för vindrutetorkare och spolare?",
+        answer: "Att vindrutetorkare och spolare fungerar och att det finns tillräckligt med spolarvätska."
+      },
+      {
+        question: "Vilka moment ingår i kontrollen av bromsarna?",
+        answer: "Kontroll av instrument- och varningslampor, funktionskontroll av färdbromsar, släpvagnens parkeringsbroms och att katastrofbromsvajern är säkert fastsatt."
+      },
+      {
+        question: "Vad ska kontrolleras vid däck och fälg?",
+        answer: "Kontrollera samtliga däck med avseende på mönsterdjup, slitage, lufttryck, hjulbultar och däckens övriga kondition."
+      },
+      {
+        question: "Vad ingår vid kontroll av vätskor?",
+        answer: "Kontrollera under fordonet för läckage samt utför nivåkontroller på spolarvätska, kylarvätska, motorolja och bromsvätska."
+      },
+      {
+        question: "Vad ska kontrolleras vid kopplingsanordning, broms- och elanslutningar?",
+        answer: "Att komponenterna inte är skadade, att dragkrok sitter rätt och är säkrad, att kopplingsmekanismen är låst, att anslutningarna är korrekta, att katastrofbromsvajern är säker och att kultrycket är anpassat."
+      },
+      {
+        question: "Vad ska kontrolleras vid last och dess säkring?",
+        answer: "Att lasten och lastbärare är säkrad, att dörrar, luckor och liknande är stängda, och att det inte finns snö, is eller stora vattensamlingar på fordonets tak eller kapell."
+      },
+      {
+        question: "Vilka två infallsvinklar gäller för samtliga delmoment?",
+        answer: "Att förklara och motivera kontrollen samt att redogöra för risker, konsekvenser och åtgärder vid fel och brister."
+      }
+    ];
+
+    let currentQuestion = 0;
+
+    function displayQuestion() {
+      document.getElementById("question").textContent = questions[currentQuestion].question;
+      document.getElementById("answer").textContent = questions[currentQuestion].answer;
+      document.getElementById("answer").style.display = "none";
+    }
+
+    document.getElementById("show-answer-btn").addEventListener("click", function() {
+      const answerDiv = document.getElementById("answer");
+      answerDiv.style.display = answerDiv.style.display === "none" ? "block" : "none";
+    });
+
+    document.getElementById("next-btn").addEventListener("click", function() {
+      currentQuestion = (currentQuestion + 1) % questions.length;
+      displayQuestion();
+    });
+
+    displayQuestion();
+  </script>
+</body>
+</html>
