@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suno JSON Prompt Builder</title>
+    <style>
+        :root {
+            --primary: #7e57c2;
+            --primary-light: #b085f5;
+            --primary-dark: #4d2c91;
+            --secondary: #ff5722;
+            --text: #333;
+            --bg: #f5f5f5;
+            --card: #fff;
+            --border: #ddd;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: var(--primary-dark);
+            margin-bottom: 10px;
+        }
+
+        .description {
+            font-size: 1.1rem;
+            color: #666;
+            max-width: 800px;
+            margin: 0 auto 30px;
+        }
+
+        .tabs {
+            display: flex;
+            background-color: var(--card);
+            border-radius: 8px 8px 0 0;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            border-bottom: none;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            background-color: #eee;
+            border: none;
+            cursor: pointer;
+            flex-grow: 1;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .tab:hover:not(.active) {
+            background-color: #ddd;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 25px;
+            background-color: var(--card);
+            border-radius: 0 0 8px 8px;
+            border: 1px solid var(--border);
+            margin-bottom: 30px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        input[type="range"] {
+            padding: 0;
+        }
+
+        .range-value {
+            display: inline-block;
+            width: 40px;
+            text-align: center;
+            margin-left: 10px;
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .section-controls {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .section-controls h3 {
+            margin-top: 0;
+        }
+
+        .output-container {
+            position: relative;
+            margin-top: 30px;
+        }
+
+        .output-buttons {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .copy-btn, .preview-btn {
+            background-color: var(--secondary);
+            padding: 6px 12px;
+            font-size: 0.9rem;
+        }
+
+        .preview-btn {
+            background-color: var(--primary);
+        }
+
+        textarea.output {
+            min-height: 300px;
+            font-family: monospace;
+            padding: 15px;
+            white-space: pre;
+            overflow-wrap: normal;
+            overflow-x: auto;
+        }
+        
+        #json-preview-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            overflow: auto;
+        }
+        
+        .modal-content {
+            position: relative;
+            background-color: var(--card);
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 900px;
+            max-height: 80vh;
+            overflow: auto;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close-modal:hover {
+            color: #555;
+        }
+        
+        .json-tree {
+            font-family: monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            padding: 10px;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            overflow: auto;
+        }
+        
+        .json-key {
+            color: var(--primary-dark);
+            font-weight: bold;
+        }
+        
+        .json-string {
+            color: #689f38;
+        }
+        
+        .json-number {
+            color: #f57c00;
+        }
+        
+        .json-boolean {
+            color: #0288d1;
+        }
+        
+        .json-null {
+            color: #9c27b0;
+        }
+        
+        .json-mark {
+            color: #666;
+        }
+        
+        .collapsible {
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .collapsed > .collapsible-content {
+            display: none;
+        }
+        
+        .collapsible::before {
+            content: "▼ ";
+            font-size: 10px;
+            color: #999;
+        }
+        
+        .collapsed > .collapsible::before {
+            content: "► ";
+        }
+
+        .checkboxes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+        }
+
+        .checkbox-item input {
+            width: auto;
+            margin-right: 8px;
+        }
+
+        .vocal-settings, .dynamics-settings, .chorus-treatment, .tone-settings, .effects-settings, .persona-settings {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .info-box {
+            background-color: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+
+        .section-builder {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .add-section-btn {
+            display: block;
+            margin: 20px auto;
+            background-color: var(--primary-light);
+        }
+
+        .song-section {
+            background-color: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .remove-section {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0;
+        }
+
+        .tabs-container {
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .tabs {
+                flex-direction: column;
+            }
+            .tab {
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Suno JSON Prompt Builder</h1>
+            <p class="description">Build powerful JSON prompts for Suno AI music generation. Customize your song parameters to get better results when modifying lyrics or creating new songs.</p>
+        </header>
+
+        <div class="tabs-container">
+            <div class="tabs">
+                <button class="tab active" data-tab="rebuild">Rebuild Mode</button>
+                <button class="tab" data-tab="full">Full Song Structure</button>
+                <button class="tab" data-tab="persona">Persona Settings</button>
+            </div>
+
+            <!-- Rebuild Mode Tab -->
+            <div class="tab-content active" id="rebuild">
+                <div class="info-box">
+                    <p>Use this mode when you want to modify lyrics while keeping the music as close as possible to the original. This helps reduce "residual lyric imprints" from the original song.</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="lyrics">Your New Lyrics:</label>
+                    <textarea id="lyrics" rows="10" placeholder="Enter your new lyrics here..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Basic Settings:</label>
+                    <div class="checkboxes">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="preserve_structure" checked>
+                            <label for="preserve_structure">Preserve Structure</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="preserve_vocals" checked>
+                            <label for="preserve_vocals">Preserve Vocals</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="preserve_genre">
+                            <label for="preserve_genre">Preserve Genre</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="enhance_instruments" checked>
+                            <label for="enhance_instruments">Enhance Instruments</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="instrument_quality">Instrument Quality:</label>
+                    <select id="instrument_quality">
+                        <option value="standard">Standard</option>
+                        <option value="high" selected>High</option>
+                        <option value="premium">Premium</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="mixing">Mixing Style:</label>
+                    <select id="mixing">
+                        <option value="basic">Basic</option>
+                        <option value="balanced">Balanced</option>
+                        <option value="modern" selected>Modern</option>
+                        <option value="live">Live</option>
+                        <option value="acoustic">Acoustic</option>
+                        <option value="cinematic">Cinematic</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="mastering">Mastering Style:</label>
+                    <select id="mastering">
+                        <option value="basic">Basic</option>
+                        <option value="balanced">Balanced</option>
+                        <option value="studio" selected>Studio</option>
+                        <option value="live">Live</option>
+                        <option value="vinyl">Vinyl</option>
+                        <option value="radio">Radio</option>
+                    </select>
+                </div>
+
+                <div class="vocal-settings">
+                    <h3>Vocal Settings</h3>
+                    <div class="form-group">
+                        <label for="vocal_processing">Processing:</label>
+                        <select id="vocal_processing">
+                            <option value="none" selected>None</option>
+                            <option value="light">Light</option>
+                            <option value="moderate">Moderate</option>
+                            <option value="enhanced">Enhanced</option>
+                        </select>
+                    </div>
+
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="preserve_character" checked>
+                        <label for="preserve_character">Preserve Character</label>
+                    </div>
+
+                    <div class="form-group">
+                        <h4>Duet Settings</h4>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="duet_enabled">
+                            <label for="duet_enabled">Enable Duet</label>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="voice_type">Voice Type:</label>
+                            <select id="voice_type">
+                                <option value="natural_clean" selected>Natural Clean</option>
+                                <option value="warm">Warm</option>
+                                <option value="bright">Bright</option>
+                                <option value="powerful">Powerful</option>
+                                <option value="soft">Soft</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="duet_style">Duet Style:</label>
+                            <select id="duet_style">
+                                <option value="alternating" selected>Alternating</option>
+                                <option value="harmony">Harmony</option>
+                                <option value="alternating_and_harmony">Alternating and Harmony</option>
+                                <option value="call_and_response">Call and Response</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="duet_effects">Effects:</label>
+                            <select id="duet_effects">
+                                <option value="none" selected>None</option>
+                                <option value="light">Light</option>
+                                <option value="moderate">Moderate</option>
+                                <option value="heavy">Heavy</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dynamics-settings">
+                    <h3>Dynamics Settings</h3>
+                    <div class="form-group">
+                        <label for="verse_dynamics">Verse Dynamics:</label>
+                        <select id="verse_dynamics">
+                            <option value="controlled" selected>Controlled</option>
+                            <option value="quiet">Quiet</option>
+                            <option value="building">Building</option>
+                            <option value="energetic">Energetic</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="prechorus_dynamics">Pre-Chorus Dynamics:</label>
+                        <select id="prechorus_dynamics">
+                            <option value="natural">Natural</option>
+                            <option value="build_with_tension" selected>Build with Tension</option>
+                            <option value="restrained">Restrained</option>
+                            <option value="explosive">Explosive</option>
+                        </select>
+                    </div>
+
+                    <div class="chorus-treatment">
+                        <h4>Chorus Treatment</h4>
+                        <div class="form-group">
+                            <label for="chorus_intensity">Intensity:</label>
+                            <select id="chorus_intensity">
+                                <option value="low">Low</option>
+                                <option value="moderate">Moderate</option>
+                                <option value="high" selected>High</option>
+                                <option value="maximum">Maximum</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="chorus_volume">Volume:</label>
+                            <select id="chorus_volume">
+                                <option value="same">Same</option>
+                                <option value="slightly_increased">Slightly Increased</option>
+                                <option value="increased" selected>Increased</option>
+                                <option value="significantly_increased">Significantly Increased</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="chorus_transition">Transition:</label>
+                            <select id="chorus_transition">
+                                <option value="smooth">Smooth</option>
+                                <option value="natural">Natural</option>
+                                <option value="impactful">Impactful</option>
+                                <option value="dramatic" selected>Dramatic</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="chorus_layering">Layering:</label>
+                            <select id="chorus_layering">
+                                <option value="minimal">Minimal</option>
+                                <option value="moderate">Moderate</option>
+                                <option value="thick">Thick</option>
+                                <option value="thicker" selected>Thicker</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="chorus_stereo_width">Stereo Width:</label>
+                            <select id="chorus_stereo_width">
+                                <option value="narrow">Narrow</option>
+                                <option value="normal">Normal</option>
+                                <option value="wide" selected>Wide</option>
+                                <option value="very_wide">Very Wide</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chorus-treatment">
+                    <h3>Chorus Instrument Treatment</h3>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="instrument_boost" checked>
+                        <label for="instrument_boost">Instrument Boost</label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="drums_treatment">Drums:</label>
+                        <select id="drums_treatment">
+                            <option value="standard">Standard</option>
+                            <option value="punchy">Punchy</option>
+                            <option value="heavier_and_punchy" selected>Heavier and Punchy</option>
+                            <option value="explosive">Explosive</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="bass_treatment">Bass:</label>
+                        <select id="bass_treatment">
+                            <option value="standard">Standard</option>
+                            <option value="fuller">Fuller</option>
+                            <option value="deeper" selected>Deeper</option>
+                            <option value="distorted">Distorted</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="synths_treatment">Synths/Keys:</label>
+                        <select id="synths_treatment">
+                            <option value="standard">Standard</option>
+                            <option value="bright">Bright</option>
+                            <option value="bright_and_layered" selected>Bright and Layered</option>
+                            <option value="aggressive">Aggressive</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="tone-settings">
+                    <h3>Tone Settings</h3>
+                    <div class="form-group">
+                        <label for="brightness">Brightness:</label>
+                        <select id="brightness">
+                            <option value="dark">Dark</option>
+                            <option value="warm">Warm</option>
+                            <option value="balanced" selected>Balanced</option>
+                            <option value="bright">Bright</option>
+                            <option value="crisp">Crisp</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="warmth">Warmth:</label>
+                        <select id="warmth">
+                            <option value="cool">Cool</option>
+                            <option value="neutral">Neutral</option>
+                            <option value="moderate" selected>Moderate</option>
+                            <option value="warm">Warm</option>
+                            <option value="hot">Hot</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="space">Space:</label>
+                        <select id="space">
+                            <option value="intimate">Intimate</option>
+                            <option value="close">Close</option>
+                            <option value="balanced">Balanced</option>
+                            <option value="wide" selected>Wide</option>
+                            <option value="expansive">Expansive</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="effects-settings">
+                    <h3>Effects Settings</h3>
+                    <div class="form-group">
+                        <label for="reverb">Reverb:</label>
+                        <select id="reverb">
+                            <option value="dry">Dry</option>
+                            <option value="minimal">Minimal</option>
+                            <option value="natural" selected>Natural</option>
+                            <option value="room">Room</option>
+                            <option value="hall">Hall</option>
+                            <option value="large">Large</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="compression">Compression:</label>
+                        <select id="compression">
+                            <option value="minimal">Minimal</option>
+                            <option value="light" selected>Light</option>
+                            <option value="medium">Medium</option>
+                            <option value="heavy">Heavy</option>
+                            <option value="pumping">Pumping</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="distortion">Distortion:</label>
+                        <select id="distortion">
+                            <option value="none" selected>None</option>
+                            <option value="subtle">Subtle</option>
+                            <option value="warm">Warm</option>
+                            <option value="crunchy">Crunchy</option>
+                            <option value="gritty">Gritty</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Full Song Structure Tab -->
+            <div class="tab-content" id="full">
+                <div class="info-box">
+                    <p>Use this mode to create a completely custom song structure with specific sections, instrumentation, and effects.</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="song_style">Genre/Style:</label>
+                    <input type="text" id="song_style" placeholder="e.g., Pop Rock, Hip Hop, EDM">
+                </div>
+
+                <div class="form-group">
+                    <label for="song_mood">Mood:</label>
+                    <input type="text" id="song_mood" placeholder="e.g., Uplifting, Melancholic, Energetic">
+                </div>
+
+                <div class="form-group">
+                    <label for="song_influences">Influences (comma separated):</label>
+                    <input type="text" id="song_influences" placeholder="e.g., The Weeknd, Daft Punk, Adele">
+                </div>
+
+                <div class="form-group">
+                    <label for="song_tempo">Tempo:</label>
+                    <input type="text" id="song_tempo" placeholder="e.g., Medium, Fast, 120 BPM">
+                </div>
+
+                <div class="form-group">
+                    <label for="song_key">Key:</label>
+                    <input type="text" id="song_key" placeholder="e.g., C Major, A Minor">
+                </div>
+
+                <div class="form-group">
+                    <label>Song Sections:</label>
+                    <div id="sections-container">
+                        <!-- Sections will be added here -->
+                    </div>
+                    <button type="button" class="add-section-btn" id="add-section">+ Add Section</button>
+                </div>
+
+                <div class="form-group">
+                    <label for="song_description">Song Description:</label>
+                    <textarea id="song_description" rows="3" placeholder="Brief description of your song..."></textarea>
+                </div>
+            </div>
+
+            <!-- Persona Tab -->
+            <div class="tab-content" id="persona">
+                <div class="info-box">
+                    <p>Use these settings to fine-tune the vocal character and performance style.</p>
+                </div>
+
+                <div class="persona-settings">
+                    <div class="form-group">
+                        <label for="persona_weight">Character Weight: <span class="range-value" id="persona_weight_value">0.8</span></label>
+                        <input type="range" id="persona_weight" min="0" max="1" step="0.1" value="0.8">
+                        <p class="input-description">0.0 = barely noticeable, 1.0 = full-on character</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="persona_intensity">Performance Intensity: <span class="range-value" id="persona_intensity_value">0.9</span></label>
+                        <input type="range" id="persona_intensity" min="0" max="1" step="0.1" value="0.9">
+                        <p class="input-description">Controls performance energy (higher = more emotional/powerful)</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="persona_grain">Vocal Grain: <span class="range-value" id="persona_grain_value">0.1</span></label>
+                        <input type="range" id="persona_grain" min="0" max="1" step="0.1" value="0.1">
+                        <p class="input-description">0.0 = clean, 1.0 = gravelly/raspy</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="persona_clarity">Vocal Clarity: <span class="range-value" id="persona_clarity_value">1.0</span></label>
+                        <input type="range" id="persona_clarity" min="0" max="1" step="0.1" value="1.0">
+                        <p class="input-description">1.0 = clear diction, lower = more airy/mumbled</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="persona_tone_shift">Tone Shift: <span class="range-value" id="persona_tone_shift_value">0.0</span></label>
+                        <input type="range" id="persona_tone_shift" min="-1" max="1" step="0.1" value="0">
+                        <p class="input-description">0 = match original, negative = deeper, positive = higher</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="persona_vibrato">Vibrato: <span class="range-value" id="persona_vibrato_value">0.2</span></label>
+                        <input type="range" id="persona_vibrato" min="0" max="1" step="0.1" value="0.2">
+                        <p class="input-description">Controls vocal vibrato; 0 = flat, 1 = dramatic</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="persona_style_hint">Style Hint:</label>
+                        <input type="text" id="persona_style_hint" value="female_dark_pop" placeholder="e.g., male_rock, female_jazz, breathy_indie">
+                        <p class="input-description">Optional string to hint character vibe</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="output-container">
+            <div class="output-buttons">
+                <button class="preview-btn" id="preview-output">Preview JSON</button>
+                <button class="copy-btn" id="copy-output">Copy JSON</button>
+            </div>
+            <textarea class="output" id="json-output" readonly></textarea>
+        </div>
+        
+        <!-- JSON Preview Modal -->
+        <div id="json-preview-modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2>JSON Preview</h2>
+                <div class="json-tree" id="json-tree-view"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Define generateJSON function first
+            function generateJSON() {
+                try {
+                    const activeTab = document.querySelector('.tab.active');
+                    if (!activeTab) {
+                        return;
+                    }
+                    const activeTabId = activeTab.getAttribute('data-tab');
+                    let jsonObj = {};
+                    
+                    if (activeTabId === 'rebuild') {
+                        jsonObj = {
+                            action: "rebuild",
+                            preserve_structure: document.getElementById('preserve_structure').checked,
+                            preserve_vocals: document.getElementById('preserve_vocals').checked,
+                            enhance_instruments: document.getElementById('enhance_instruments').checked,
+                            instrument_quality: document.getElementById('instrument_quality').value,
+                            mixing: document.getElementById('mixing').value,
+                            mastering: document.getElementById('mastering').value
+                        };
+                        
+                        if (document.getElementById('preserve_genre').checked) {
+                            jsonObj.preserve_genre = true;
+                        }
+                        
+                        // Vocal handling
+                        const vocalHandling = {
+                            processing: document.getElementById('vocal_processing').value
+                        };
+                        
+                        if (document.getElementById('preserve_character').checked) {
+                            vocalHandling.preserve_character = true;
+                        }
+                        
+                        if (document.getElementById('duet_enabled').checked) {
+                            vocalHandling.duet = {
+                                enabled: true,
+                                voice_type: document.getElementById('voice_type').value,
+                                style: document.getElementById('duet_style').value,
+                                effects: document.getElementById('duet_effects').value
+                            };
+                        } else {
+                            vocalHandling.duet = {
+                                enabled: false
+                            };
+                        }
+                        
+                        jsonObj.vocal_handling = vocalHandling;
+                        
+                        // Dynamics
+                        const dynamics = {
+                            verse: document.getElementById('verse_dynamics').value,
+                            prechorus: document.getElementById('prechorus_dynamics').value,
+                            chorus: {
+                                intensity: document.getElementById('chorus_intensity').value,
+                                volume: document.getElementById('chorus_volume').value,
+                                transition: document.getElementById('chorus_transition').value,
+                                layering: document.getElementById('chorus_layering').value,
+                                stereo_width: document.getElementById('chorus_stereo_width').value
+                            }
+                        };
+                        
+                        jsonObj.dynamics = dynamics;
+                        
+                        // Chorus treatment
+                        const chorusTreatment = {
+                            instrument_boost: document.getElementById('instrument_boost').checked,
+                            drums: document.getElementById('drums_treatment').value,
+                            bass: document.getElementById('bass_treatment').value,
+                            synths: document.getElementById('synths_treatment').value
+                        };
+                        
+                        jsonObj.chorus_treatment = chorusTreatment;
+                        
+                        // Tone
+                        const tone = {
+                            brightness: document.getElementById('brightness').value,
+                            warmth: document.getElementById('warmth').value,
+                            space: document.getElementById('space').value
+                        };
+                        
+                        jsonObj.tone = tone;
+                        
+                        // Effects
+                        const effects = {
+                            reverb: document.getElementById('reverb').value,
+                            compression: document.getElementById('compression').value,
+                            distortion: document.getElementById('distortion').value
+                        };
+                        
+                        jsonObj.effects = effects;
+                    } else if (activeTabId === 'full') {
+                        jsonObj = {
+                            style: document.getElementById('song_style').value || "unspecified",
+                            mood: document.getElementById('song_mood').value || "unspecified",
+                            tempo: document.getElementById('song_tempo').value || "moderate",
+                            key: document.getElementById('song_key').value || "C Major",
+                            structure: []
+                        };
+                        
+                        // Add influences if specified
+                        const influences = document.getElementById('song_influences').value;
+                        if (influences) {
+                            jsonObj.influences = influences.split(',').map(inf => inf.trim());
+                        }
+                        
+                        // Add sections
+                        const sections = document.querySelectorAll('.song-section');
+                        sections.forEach(section => {
+                            const sectionId = section.dataset.sectionId;
+                            const sectionObj = {
+                                section: document.getElementById(`section_type_${sectionId}`).value,
+                                lyrics: document.getElementById(`section_lyrics_${sectionId}`).value || "[instrumental]"
+                            };
+                            
+                            const vocalStyle = document.getElementById(`section_vocal_style_${sectionId}`).value;
+                            if (vocalStyle) {
+                                sectionObj.vocal_style = vocalStyle;
+                            }
+                            
+                            const instruments = document.getElementById(`section_instruments_${sectionId}`).value;
+                            if (instruments) {
+                                sectionObj.instruments = instruments.split(',').map(inst => inst.trim());
+                            }
+                            
+                            const effects = document.getElementById(`section_effects_${sectionId}`).value;
+                            if (effects) {
+                                sectionObj.effects = effects.split(',').map(eff => eff.trim());
+                            }
+                            
+                            jsonObj.structure.push(sectionObj);
+                        });
+                        
+                        // Add description if specified
+                        const description = document.getElementById('song_description').value;
+                        if (description) {
+                            jsonObj.description = description;
+                        }
+                    } else if (activeTabId === 'persona') {
+                        jsonObj = {
+                            persona: {
+                                weight: parseFloat(document.getElementById('persona_weight').value),
+                                intensity: parseFloat(document.getElementById('persona_intensity').value),
+                                grain: parseFloat(document.getElementById('persona_grain').value),
+                                clarity: parseFloat(document.getElementById('persona_clarity').value),
+                                tone_shift: parseFloat(document.getElementById('persona_tone_shift').value),
+                                vibrato: parseFloat(document.getElementById('persona_vibrato').value),
+                                style_hint: document.getElementById('persona_style_hint').value
+                            }
+                        };
+                    }
+                    
+                    // Add lyrics for rebuild mode
+                    const jsonOutput = document.getElementById('json-output');
+                    if (activeTabId === 'rebuild') {
+                        const lyrics = document.getElementById('lyrics').value;
+                        if (lyrics) {
+                            let finalJson = JSON.stringify(jsonObj, null, 2) + "\n\n" + lyrics;
+                            jsonOutput.value = finalJson;
+                        } else {
+                            jsonOutput.value = JSON.stringify(jsonObj, null, 2);
+                        }
+                    } else {
+                        jsonOutput.value = JSON.stringify(jsonObj, null, 2);
+                    }
+                } catch (error) {
+                    console.error('Error generating JSON:', error);
+                }
+            }
+            
+            // Tab switching functionality
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                    
+                    // Update active tab
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    // Update active content
+                    tabContents.forEach(content => {
+                        content.classList.remove('active');
+                        if (content.id === tabId) {
+                            content.classList.add('active');
+                        }
+                    });
+                    
+                    // Update JSON output
+                    generateJSON();
+                });
+            });
+            
+            // Range input value display
+            const rangeInputs = document.querySelectorAll('input[type="range"]');
+            rangeInputs.forEach(input => {
+                const valueDisplay = document.getElementById(`${input.id}_value`);
+                input.addEventListener('input', () => {
+                    valueDisplay.textContent = input.value;
+                    generateJSON();
+                });
+            });
+            
+            // Section builder functionality
+            const addSectionBtn = document.getElementById('add-section');
+            const sectionsContainer = document.getElementById('sections-container');
+            let sectionCount = 0;
+            
+            addSectionBtn.addEventListener('click', () => {
+                addSection();
+            });
+            
+            function addSection() {
+                const sectionId = sectionCount++;
+                const sectionDiv = document.createElement('div');
+                sectionDiv.className = 'song-section';
+                sectionDiv.dataset.sectionId = sectionId;
+                
+                sectionDiv.innerHTML = `
+                    <button type="button" class="remove-section" data-section-id="${sectionId}">×</button>
+                    <div class="form-group">
+                        <label for="section_type_${sectionId}">Section Type:</label>
+                        <select id="section_type_${sectionId}" class="section-type">
+                            <option value="intro">Intro</option>
+                            <option value="verse">Verse</option>
+                            <option value="prechorus">Pre-Chorus</option>
+                            <option value="chorus">Chorus</option>
+                            <option value="bridge">Bridge</option>
+                            <option value="breakdown">Breakdown</option>
+                            <option value="solo">Solo</option>
+                            <option value="outro">Outro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="section_lyrics_${sectionId}">Lyrics:</label>
+                        <textarea id="section_lyrics_${sectionId}" rows="3" class="section-lyrics" placeholder="Lyrics for this section..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="section_vocal_style_${sectionId}">Vocal Style:</label>
+                        <input type="text" id="section_vocal_style_${sectionId}" class="section-vocal-style" placeholder="e.g., Powerful, Breathy, Aggressive">
+                    </div>
+                    <div class="form-group">
+                        <label for="section_instruments_${sectionId}">Instruments (comma separated):</label>
+                        <input type="text" id="section_instruments_${sectionId}" class="section-instruments" placeholder="e.g., Electric Guitar, Bass, Drums">
+                    </div>
+                    <div class="form-group">
+                        <label for="section_effects_${sectionId}">Effects (comma separated):</label>
+                        <input type="text" id="section_effects_${sectionId}" class="section-effects" placeholder="e.g., Reverb, Delay, Distortion">
+                    </div>
+                `;
+                
+                sectionsContainer.appendChild(sectionDiv);
+                
+                // Add event listener to remove button
+                const removeBtn = sectionDiv.querySelector('.remove-section');
+                removeBtn.addEventListener('click', () => {
+                    sectionsContainer.removeChild(sectionDiv);
+                    generateJSON();
+                });
+                
+                // Add event listeners to section inputs
+                const sectionInputs = sectionDiv.querySelectorAll('input, textarea, select');
+                sectionInputs.forEach(input => {
+                    input.addEventListener('input', generateJSON);
+                });
+                
+                generateJSON();
+            }
+            
+            // Add initial section
+            addSection();
+            
+            // Input change handlers
+            const allInputs = document.querySelectorAll('input, select, textarea');
+            allInputs.forEach(input => {
+                if (!input.classList.contains('output')) {
+                    input.addEventListener('input', generateJSON);
+                    input.addEventListener('change', generateJSON);
+                }
+            });
+            
+            // Copy button functionality
+            const copyBtn = document.getElementById('copy-output');
+            const previewBtn = document.getElementById('preview-output');
+            const jsonOutput = document.getElementById('json-output');
+            const jsonPreviewModal = document.getElementById('json-preview-modal');
+            const jsonTreeView = document.getElementById('json-tree-view');
+            const closeModal = document.querySelector('.close-modal');
+            
+            copyBtn.addEventListener('click', () => {
+                if (!jsonOutput.value) {
+                    alert('No JSON content to copy');
+                    return;
+                }
+                
+                // Try modern clipboard API first
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(jsonOutput.value).then(() => {
+                        copyBtn.textContent = 'Copied!';
+                        setTimeout(() => {
+                            copyBtn.textContent = 'Copy JSON';
+                        }, 2000);
+                    }).catch(() => {
+                        // Fall back to execCommand
+                        fallbackCopy();
+                    });
+                } else {
+                    // Use fallback directly
+                    fallbackCopy();
+                }
+                
+                function fallbackCopy() {
+                    jsonOutput.select();
+                    jsonOutput.setSelectionRange(0, 99999); // For mobile devices
+                    document.execCommand('copy');
+                    copyBtn.textContent = 'Copied!';
+                    setTimeout(() => {
+                        copyBtn.textContent = 'Copy JSON';
+                    }, 2000);
+                }
+            });
+            
+            // Preview button functionality
+            previewBtn.addEventListener('click', () => {
+                if (!jsonOutput.value) {
+                    alert('No JSON content to preview');
+                    return;
+                }
+                
+                try {
+                    let jsonText = jsonOutput.value;
+                    const activeTab = document.querySelector('.tab.active').getAttribute('data-tab');
+                    
+                    // Handle the case where lyrics are appended to the JSON in rebuild mode
+                    if (activeTab === 'rebuild') {
+                        const lyricsInput = document.getElementById('lyrics').value;
+                        if (lyricsInput) {
+                            // Find where the JSON ends and lyrics begin
+                            const lastBracketIndex = jsonText.lastIndexOf('}');
+                            if (lastBracketIndex > -1) {
+                                jsonText = jsonText.substring(0, lastBracketIndex + 1);
+                            }
+                        }
+                    }
+                    
+                    const jsonObj = JSON.parse(jsonText);
+                    
+                    // Create formatted JSON preview
+                    let formattedJson = JSON.stringify(jsonObj, null, 2);
+                    jsonTreeView.innerHTML = '<pre>' + escapeHtml(formattedJson) + '</pre>';
+                    
+                    // Show the modal
+                    jsonPreviewModal.style.display = 'block';
+                } catch (error) {
+                    alert('Error parsing JSON: ' + error.message);
+                }
+            });
+            
+            // Close modal functionality
+            closeModal.addEventListener('click', () => {
+                jsonPreviewModal.style.display = 'none';
+            });
+            
+            // Close modal when clicking outside
+            window.addEventListener('click', (e) => {
+                if (e.target === jsonPreviewModal) {
+                    jsonPreviewModal.style.display = 'none';
+                }
+            });
+            
+            // Helper function to escape HTML special characters
+            function escapeHtml(str) {
+                const div = document.createElement('div');
+                div.textContent = str;
+                return div.innerHTML;
+            }
+            
+            // Initialize JSON output
+            generateJSON();
+        });
+    </script>
+</body>
+</html>
